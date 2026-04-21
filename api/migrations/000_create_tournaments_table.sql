@@ -1,0 +1,17 @@
+-- Migration: create tournaments table
+CREATE TABLE IF NOT EXISTS `tournaments` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `title` VARCHAR(255) NOT NULL,
+  `date` DATE NOT NULL,
+  `time` VARCHAR(20) DEFAULT NULL,
+  `mode` VARCHAR(64) DEFAULT NULL,
+  `fee` DECIMAL(8,2) DEFAULT 0.00,
+  `organizer` VARCHAR(255) DEFAULT NULL,
+  `location` VARCHAR(255) DEFAULT NULL,
+  `registrationInfo` TEXT,
+  `description` TEXT,
+  `flyer` VARCHAR(255) DEFAULT NULL,
+  `calendar_event_id` VARCHAR(255) DEFAULT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
