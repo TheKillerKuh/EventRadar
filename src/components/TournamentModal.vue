@@ -1,30 +1,53 @@
 <template>
   <div class="modal-backdrop" @click.self="close">
-    <div class="modal max-w-4xl w-full max-h-[90vh] overflow-auto">
-      <div class="p-4 bg-white rounded-md shadow">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            <div v-if="t?.flyer" class="flex justify-center md:justify-start">
-              <img :src="t.flyer" alt="flyer" class="w-full md:w-[66%] max-h-[45vh] object-contain rounded" />
-            </div>
-            <div>
-              <h2 class="text-2xl font-semibold">{{ t?.title }}</h2>
-              <div class="text-sm text-gray-600 mt-1">{{ t?.date }} {{ t?.time }} — {{ t?.mode }}</div>
-              <div class="mt-3 text-sm">{{ t?.location }}</div>
-              <div class="mt-2 text-sm font-medium">Startgeld: €{{ t?.fee }}</div>
-              <p class="mt-4 text-gray-700 whitespace-pre-line">{{ t?.description }}</p>
+    <div class="modal">
+      <button @click="close" class="close-btn">✕</button>
 
-              <ul class="text-sm space-y-2 mt-4">
-                <li v-if="t?.user_name"><strong>Owner:</strong> {{ t.user_name }} ({{ t.user_email }})</li>
-                <li v-else-if="t?.user_email"><strong>Owner:</strong> {{ t.user_email }}</li>
-                <li v-if="t?.organizer"><strong>Organisator:</strong> {{ t.organizer }}</li>
-                <li v-if="t?.registrationInfo"><strong>Anmeldung:</strong> {{ t.registrationInfo }}</li>
-                <li v-if="t?.calendar_event_id"><strong>Calendar Event ID:</strong> {{ t.calendar_event_id }}</li>
-              </ul>
-            </div>
+      <div class="modal-body">
+        <div v-if="t?.flyer" class="flyer-container">
+          <img :src="t.flyer" alt="flyer" class="flyer-image" />
+        </div>
+
+        <div class="details-list">
+          <div class="detail-row">
+            <span class="label">Titel</span>
+            <span class="value title">{{ t?.title }}</span>
           </div>
 
-        <div class="mt-4 text-right">
-          <button @click="close" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Schließen</button>
+          <div class="detail-row">
+            <span class="label">Datum</span>
+            <span class="value">{{ t?.date }} {{ t?.time || '' }}</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="label">Modus</span>
+            <span class="value">{{ t?.mode }}</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="label">Startgeld</span>
+            <span class="value">{{ t?.fee }} EUR</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="label">Ort</span>
+            <span class="value">{{ t?.location }}</span>
+          </div>
+
+          <div v-if="t?.organizer" class="detail-row">
+            <span class="label">Veranstalter</span>
+            <span class="value">{{ t?.organizer }}</span>
+          </div>
+
+          <div v-if="t?.registrationInfo" class="detail-row">
+            <span class="label">Anmeldung</span>
+            <span class="value">{{ t?.registrationInfo }}</span>
+          </div>
+
+          <div v-if="t?.description" class="detail-row">
+            <span class="label">Beschreibung</span>
+            <span class="value">{{ t?.description }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -33,13 +56,122 @@
 
 <script setup lang="ts">
 import type { Tournament } from '../stores/tournaments'
-const props = defineProps<{ t?: Tournament }>()
+defineProps<{ t?: Tournament }>()
 const emit = defineEmits(['close'])
-function close() { emit('close') }
+function close() {
+  emit('close')
+}
 </script>
 
 <style scoped>
-.modal-backdrop { @apply fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center }
-.modal { }
-.modal > .p-6 { }
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 50;
+}
+
+.modal {
+  background: white;
+  border-radius: 1rem;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  border: none;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.close-btn:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.modal-body {
+  display: flex;
+  gap: 2rem;
+  padding: 2rem;
+  padding-right: 3.5rem;
+}
+
+.flyer-container {
+  flex-shrink: 0;
+  width: 300px;
+}
+
+.flyer-image {
+  width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  object-fit: contain;
+}
+
+.details-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.value {
+  font-size: 0.9375rem;
+  color: #374151;
+}
+
+.value.title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+@media (max-width: 640px) {
+  .modal-body {
+    flex-direction: column;
+    padding: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .flyer-container {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+}
 </style>

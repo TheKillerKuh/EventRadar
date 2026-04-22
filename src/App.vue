@@ -6,13 +6,13 @@
       <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         <div class="text-lg font-bold">EventRadar</div>
         <nav class="space-x-4">
-          <router-link to="/" class="text-gray-700 hover:underline">Turniere</router-link>
-          <router-link to="/calendar" class="text-gray-700 hover:underline">Kalender</router-link>
+          <router-link to="/" class="nav-link">Turniere</router-link>
+          <router-link to="/calendar" class="nav-link">Kalender</router-link>
           <template v-if="!auth.loading">
-            <router-link v-if="!auth.user" to="/login" class="text-gray-700 hover:underline">Login</router-link>
+            <router-link v-if="!auth.user" to="/login" class="nav-link">Login</router-link>
             <span v-else class="inline-flex items-center gap-3">
-              <router-link to="/admin" class="text-gray-700 hover:underline">{{ auth.user.name }}</router-link>
-              <button @click="doLogout" class="text-sm px-2 py-1 border rounded">Logout</button>
+              <router-link to="/admin" class="nav-link">{{ auth.user.name }}</router-link>
+              <button @click="doLogout" class="text-sm px-2 py-1 border rounded hover:bg-gray-100">Logout</button>
             </span>
           </template>
         </nav>
@@ -29,6 +29,41 @@
 <style scoped>
 a { color: #111; text-decoration: none }
 a:hover { text-decoration: underline }
+
+.nav-link {
+  @apply text-gray-600 hover:text-gray-900 px-3 py-2 transition-all relative;
+  text-decoration: none;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  transition: width 0.3s ease;
+}
+
+.nav-link.router-link-active,
+.nav-link.router-link-exact-active {
+  @apply text-gray-900 font-semibold;
+}
+
+.nav-link.router-link-active::after,
+.nav-link.router-link-exact-active::after {
+  width: 100%;
+}
+
+.nav-link:hover {
+  @apply text-gray-900;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
 </style>
 
 <script setup lang="ts">

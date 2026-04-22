@@ -88,30 +88,74 @@ if (empty($calendarId)) {
     exit;
 }
 
+
 // build event body from tournament
 function tournament_to_event($t) {
-    $tz = 'Europe/Berlin';
-    $startDateTime = null;
-    $endDateTime = null;
-    if (!empty($t['date']) && !empty($t['time'])) {
-        $start = $t['date'] . ' ' . $t['time'];
-        $dt = new DateTime($start, new DateTimeZone($tz));
-        $startDateTime = $dt->format(DateTime::RFC3339);
-        // default duration 4 hours
-        $dt->modify('+4 hours');
-        $endDateTime = $dt->format(DateTime::RFC3339);
+    // Build description with time and fee information
+    $description = '';
+    
+    // Add start time if available
+    if (!empty($t['time'])) {
+        $description .= "Startzeit: " . $t['time'] . "\n";
     }
+    
+    // Add entry fee if available
+    if (!empty($t['fee'])) {
+        $description .= "Startgeld: " . $t['fee'] . "\n";
+    }
+    
+    // Add organizer if available
+    if (!empty($t['organizer'])) {
+        $description .= "Veranstalter: " . $t['organizer'] . "\n";
+    }
+    
+    // Add mode if available
+    if (!empty($t['mode'])) {
+        $description .= "Modus: " . $t['mode'] . "\n";
+    }
+    
+    // Add original description
+    if (!empty($t['description'])) {
+        $description .= "\n" . $t['description'];
+    }
+    
+    // Add flyer link if available
+    if (!empty($t['flyer'])) {
+        $flyerUrl = $t['flyer'];
+        // If it's a relative path, make it absolute
+        if (strpos($flyerUrl, 'http') !== 0) {
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $flyerUrl = $protocol . '://' . $host . '/' . ltrim($flyerUrl, '/');
+        }
+        $description .= "\n\n📄 Flyer: " . $flyerUrl;
+    }
+    
+    // Add registration info
+    if (!empty($t['registrationInfo'])) {
+        $description .= "\n\nAnmeldung: " . $t['registrationInfo'];
+    }
+    
     $event = [
         'summary' => $t['title'] ?? 'Turnier',
         'location' => $t['location'] ?? '',
-        'description' => ($t['description'] ?? '') . "\n\nAnmeldung: " . ($t['registrationInfo'] ?? ''),
+        'description' => $description,
     ];
-    if ($startDateTime) {
-        $event['start'] = ['dateTime' => $startDateTime, 'timeZone' => $tz];
-        $event['end'] = ['dateTime' => $endDateTime, 'timeZone' => $tz];
+    
+    // Use date-only format for all-day events
+    if (!empty($t['date'])) {
+        // For all-day events, use 'date' instead of 'dateTime'
+        // The end date should be the next day (exclusive)
+        $startDate = $t['date'];
+        $endDate = date('Y-m-d', strtotime($startDate . ' +1 day'));
+        
+        $event['start'] = ['date' => $startDate];
+        $event['end'] = ['date' => $endDate];
     }
+    
     return $event;
 }
+
 
 // perform API call helpers
 function http_request($method, $url, $body = null, $headers = []) {

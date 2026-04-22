@@ -3,12 +3,23 @@
     <h2 class="text-xl font-semibold mb-4">Anmelden</h2>
     <form @submit.prevent="submit">
       <label class="block mb-2">
-        <span class="text-sm">E-Mail</span>
-        <input v-model="email" type="email" class="w-full border rounded px-2 py-1" required />
+        <span class="text-sm">Benutzername</span>
+        <input
+          v-model="username"
+          type="text"
+          class="w-full border rounded px-2 py-1"
+          required
+          placeholder="Dein Benutzername"
+        />
       </label>
       <label class="block mb-4">
         <span class="text-sm">Passwort</span>
-        <input v-model="password" type="password" class="w-full border rounded px-2 py-1" required />
+        <input
+          v-model="password"
+          type="password"
+          class="w-full border rounded px-2 py-1"
+          required
+        />
       </label>
       <div class="flex items-center justify-between">
         <button class="bg-blue-600 text-white px-4 py-2 rounded" :disabled="loading">
@@ -21,34 +32,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-const emit = defineEmits(['login']);
+import { ref } from 'vue'
+const emit = defineEmits(['login'])
 
-const email = ref('');
-const password = ref('');
-const loading = ref(false);
-const error = ref('');
+const username = ref('')
+const password = ref('')
+const loading = ref(false)
+const error = ref('')
 
 async function submit() {
-  error.value = '';
-  loading.value = true;
+  error.value = ''
+  loading.value = true
   try {
     const res = await fetch('/api/login.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ email: email.value, password: password.value })
-    });
-    const j = await res.json();
+      body: JSON.stringify({ name: username.value, password: password.value }),
+    })
+    const j = await res.json()
     if (!res.ok) {
-      error.value = j.error || 'Login fehlgeschlagen';
+      error.value = j.error || 'Login fehlgeschlagen'
     } else {
-      emit('login', j.user);
+      emit('login', j.user)
     }
   } catch (e) {
-    error.value = 'Netzwerkfehler';
+    error.value = 'Netzwerkfehler'
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 </script>

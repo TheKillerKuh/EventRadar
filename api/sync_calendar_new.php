@@ -90,17 +90,47 @@ if (empty($calendarId)) {
 
 // build event body from tournament
 function tournament_to_event($t) {
-    // Build description with time and fee
-    $description = $t['description'] ?? '';
+    // Build description with time and fee information
+    $description = '';
     
+    // Add start time if available
     if (!empty($t['time'])) {
-        $description .= "\n\nStartzeit: " . $t['time'];
+        $description .= "Startzeit: " . $t['time'] . "\n";
     }
     
+    // Add entry fee if available
     if (!empty($t['fee'])) {
-        $description .= "\nPreis: " . $t['fee'] . " €";
+        $description .= "Startgeld: " . $t['fee'] . "\n";
     }
     
+    // Add organizer if available
+    if (!empty($t['organizer'])) {
+        $description .= "Veranstalter: " . $t['organizer'] . "\n";
+    }
+    
+    // Add mode if available
+    if (!empty($t['mode'])) {
+        $description .= "Modus: " . $t['mode'] . "\n";
+    }
+    
+    // Add original description
+    if (!empty($t['description'])) {
+        $description .= "\n" . $t['description'];
+    }
+    
+    // Add flyer link if available
+    if (!empty($t['flyer'])) {
+        $flyerUrl = $t['flyer'];
+        // If it's a relative path, make it absolute
+        if (strpos($flyerUrl, 'http') !== 0) {
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $flyerUrl = $protocol . '://' . $host . '/' . ltrim($flyerUrl, '/');
+        }
+        $description .= "\n\n📄 Flyer: " . $flyerUrl;
+    }
+    
+    // Add registration info
     if (!empty($t['registrationInfo'])) {
         $description .= "\n\nAnmeldung: " . $t['registrationInfo'];
     }
@@ -108,14 +138,82 @@ function tournament_to_event($t) {
     $event = [
         'summary' => $t['title'] ?? 'Turnier',
         'location' => $t['location'] ?? '',
-        'description' => trim($description),
+        'description' => $description,
     ];
     
-    // Set as all-day event
+    // Use date-only format for all-day events
     if (!empty($t['date'])) {
-        $event['start'] = ['date' => $t['date']];
-        $event['end'] = ['date' => $t['date']];
+        // For all-day events, use 'date' instead of 'dateTime'
+        // The end date should be the next day (exclusive)
+        $startDate = $t['date'];
+        $endDate = date('Y-m-d', strtotime($startDate . ' +1 day'));
+        
+        $event['start'] = ['date' => $startDate];
+        $event['end'] = ['date' => $endDate];
     }
     
     return $event;
 }
+
+
+// perform API call helpers
+function http_request($method, $url, $body = null, $headers = []) {
+    $h = $headers;
+    if ($body !== null && !in_array('Content-Type: application/json', $h)) {
+        $h[] = 'Content-Type: application/json';
+    }
+    $opts = [
+        'http' => [
+            'method' => $method,
+            'header' => implode("\r\n", $h),
+            'content' => $body !== null ? $body : null,
+            'ignore_errors' => true,
+        ]
+    ];
+    return file_get_contents($url, false, stream_context_create($opts));
+}
+
+$eventBody = tournament_to_event($t);
+
+try {
+    if ($action === 'create') {
+        $url = 'https://www.googleapis.com/calendar/v3/calendars/' . rawurlencode($calendarId) . '/events';
+        $resp = http_request('POST', $url, json_encode($eventBody), ["Authorization: Bearer $accessToken"]);
+        $data = json_decode($resp, true);
+        echo json_encode(['ok' => true, 'event' => $data]);
+        exit;
+    } elseif ($action === 'update') {
+        if (empty($t['calendar_event_id'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Missing calendar_event_id for update']);
+            exit;
+        }
+        $eventId = $t['calendar_event_id'];
+        $url = 'https://www.googleapis.com/calendar/v3/calendars/' . rawurlencode($calendarId) . '/events/' . rawurlencode($eventId);
+        $resp = http_request('PUT', $url, json_encode($eventBody), ["Authorization: Bearer $accessToken"]);
+        $data = json_decode($resp, true);
+        echo json_encode(['ok' => true, 'event' => $data]);
+        exit;
+    } elseif ($action === 'delete') {
+        if (empty($t['calendar_event_id'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Missing calendar_event_id for delete']);
+            exit;
+        }
+        $eventId = $t['calendar_event_id'];
+        $url = 'https://www.googleapis.com/calendar/v3/calendars/' . rawurlencode($calendarId) . '/events/' . rawurlencode($eventId);
+        $resp = http_request('DELETE', $url, null, ["Authorization: Bearer $accessToken"]);
+        echo json_encode(['ok' => true, 'deleted' => true]);
+        exit;
+    } else {
+        http_response_code(400);
+        echo json_encode(['error' => 'Unknown action']);
+        exit;
+    }
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Exception', 'message' => $e->getMessage()]);
+    exit;
+}
+
+?>
