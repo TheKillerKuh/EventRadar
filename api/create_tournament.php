@@ -21,6 +21,12 @@ if (empty($_SESSION['user_id'])) {
 }
 
 $user_id = (int)$_SESSION['user_id'];
+$is_admin = (($_SESSION['role'] ?? '') === 'admin');
+
+// Admins may explicitly assign an owner when creating tournaments.
+if ($is_admin && isset($t['user_id']) && (int)$t['user_id'] > 0) {
+    $user_id = (int)$t['user_id'];
+}
 
 // Pflichtfelder prüfen
 if (empty($t['title']) || empty($t['date'])) {

@@ -1,16 +1,14 @@
-<script setup lang="ts"></script>
-
 <template>
   <div id="app">
     <header class="bg-white border-b border-gray-200">
-      <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="max-w-[73rem] mx-auto px-4 py-4 flex items-center justify-between app-header-inner">
         <div class="text-lg font-bold">EventRadar</div>
-        <nav class="space-x-4">
+        <nav class="app-nav">
           <router-link to="/" class="nav-link">Turniere</router-link>
           <router-link to="/calendar" class="nav-link">Kalender</router-link>
           <template v-if="!auth.loading">
             <router-link v-if="!auth.user" to="/login" class="nav-link">Login</router-link>
-            <span v-else class="inline-flex items-center gap-3">
+            <span v-else class="auth-actions">
               <router-link to="/admin" class="nav-link">{{ auth.user.name }}</router-link>
               <button @click="doLogout" class="text-sm px-2 py-1 border rounded hover:bg-gray-100">Logout</button>
             </span>
@@ -19,7 +17,7 @@
       </div>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 py-6">
+    <main class="max-w-[73rem] mx-auto px-4 py-6">
       <router-view />
     </main>
     <Toasts />
@@ -63,6 +61,37 @@ a:hover { text-decoration: underline }
 
 .nav-link:hover::after {
   width: 100%;
+}
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.auth-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .app-header-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .app-nav {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.2rem;
+  }
+
+  .auth-actions {
+    flex-wrap: wrap;
+  }
 }
 </style>
 

@@ -1,5 +1,7 @@
 <template>
   <section class="users-admin">
+    <div v-if="!isAdmin" class="error">Nur Administratoren dürfen die Benutzerverwaltung sehen.</div>
+    <template v-else>
     <div class="header">
       <div>
         <h1>Benutzerverwaltung</h1>
@@ -165,14 +167,18 @@
         </div>
       </div>
     </div>
+    </template>
   </section>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useToastStore } from '../stores/toast'
+import { useAuthStore } from '../stores/auth'
 
 const toast = useToastStore()
+const auth = useAuthStore()
+const isAdmin = computed(() => !!(auth.user && (auth.user.role === 'admin' || auth.user.is_admin)))
 
 const users = ref<any[]>([])
 const loading = ref(false)
@@ -205,6 +211,12 @@ const resetting = ref(false)
 const deleting = ref(false)
 
 async function load() {
+  if (!isAdmin.value) {
+    users.value = []
+    loading.value = false
+    error.value = ''
+    return
+  }
   loading.value = true
   error.value = ''
   try {
@@ -382,7 +394,9 @@ async function doDelete() {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  if (isAdmin.value) load()
+})
 </script>
 
 <style scoped>

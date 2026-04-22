@@ -16,7 +16,8 @@
       >
         🎯 Turniere
       </button>
-      <button 
+      <button
+        v-if="isAdmin"
         :class="['nav-btn', { active: activeTab === 'users' }]" 
         @click="activeTab = 'users'"
       >
@@ -31,14 +32,14 @@
     </div>
 
     <!-- Users Tab -->
-    <div v-if="activeTab === 'users'" class="tab-content">
+    <div v-if="isAdmin && activeTab === 'users'" class="tab-content">
       <UsersAdminView />
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, watchEffect } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import MyTournaments from '../components/MyTournaments.vue'
 import UsersAdminView from './UsersAdminView.vue'
@@ -46,6 +47,13 @@ import UsersAdminView from './UsersAdminView.vue'
 const auth = useAuthStore()
 const listRef = ref()
 const activeTab = ref('tournaments')
+const isAdmin = computed(() => !!(auth.user && (auth.user.role === 'admin' || auth.user.is_admin)))
+
+watchEffect(() => {
+  if (!isAdmin.value && activeTab.value === 'users') {
+    activeTab.value = 'tournaments'
+  }
+})
 </script>
 
 <style scoped>

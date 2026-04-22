@@ -33,14 +33,19 @@ if ($row['user_id'] && $row['user_id'] != $user_id && ($_SESSION['role'] ?? '') 
     echo json_encode(['error' => 'Not authorized']);
     exit;
 }
+$is_admin = (($_SESSION['role'] ?? '') === 'admin');
+$target_user_id = (int)$row['user_id'];
+if ($is_admin && isset($t['user_id']) && (int)$t['user_id'] > 0) {
+    $target_user_id = (int)$t['user_id'];
+}
 
 // include flyer and calendar_event_id if provided
 $flyer = isset($t['flyer']) ? $t['flyer'] : null;
 $calendar_event_id = isset($t['calendar_event_id']) ? $t['calendar_event_id'] : null;
 
-$stmt = $mysqli->prepare("UPDATE tournaments SET title=?, date=?, time=?, mode=?, fee=?, organizer=?, location=?, registrationInfo=?, description=?, flyer=?, calendar_event_id=?, updated_at=NOW() WHERE id=?");
+$stmt = $mysqli->prepare("UPDATE tournaments SET user_id=?, title=?, date=?, time=?, mode=?, fee=?, organizer=?, location=?, registrationInfo=?, description=?, flyer=?, calendar_event_id=?, updated_at=NOW() WHERE id=?");
 if (!$stmt) { http_response_code(500); echo json_encode(['error' => 'Prepare failed']); exit; }
-$stmt->bind_param('sssssssssssi', $t['title'], $t['date'], $t['time'], $t['mode'], $t['fee'], $t['organizer'], $t['location'], $t['registrationInfo'], $t['description'], $flyer, $calendar_event_id, $id);
+$stmt->bind_param('isssssssssssi', $target_user_id, $t['title'], $t['date'], $t['time'], $t['mode'], $t['fee'], $t['organizer'], $t['location'], $t['registrationInfo'], $t['description'], $flyer, $calendar_event_id, $id);
 $ok = $stmt->execute();
 if (!$ok) { http_response_code(500); echo json_encode(['error' => 'Update failed', 'detail' => $stmt->error]); exit; }
 $stmt->close();
