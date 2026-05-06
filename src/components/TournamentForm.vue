@@ -217,6 +217,17 @@ const timeInput = ref<HTMLInputElement | null>(null)
 let datePicker: flatpickr.Instance | null = null
 let timePicker: flatpickr.Instance | null = null
 
+function normalizeTimeValue(value: unknown): string {
+  const raw = String(value ?? '').trim()
+  if (!raw) return ''
+  const match = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/)
+  if (!match) return ''
+  const hours = Number(match[1])
+  const minutes = Number(match[2])
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return ''
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+}
+
 function initDatePicker() {
   if (dateInput.value) {
     if (datePicker) datePicker.destroy()
@@ -244,7 +255,7 @@ function initTimePicker() {
       locale: German,
       time_24hr: true,
       allowInput: true,
-      defaultDate: form.value.time ? `2000-01-01 ${form.value.time}` : undefined,
+      defaultDate: form.value.time || undefined,
     })
   }
 }
@@ -265,9 +276,11 @@ watch(
   async (v: Record<string, any> | null) => {
     if (v) {
       isEdit.value = true
+      const normalizedTime = normalizeTimeValue(v.time)
       form.value = {
         ...createInitialForm(),
         ...v,
+        time: normalizedTime,
         user_id: props.isAdmin ? (v.user_id ?? null) : defaultUserIdForCurrentRole(),
       }
       if (v.flyer) preview.value = v.flyer
